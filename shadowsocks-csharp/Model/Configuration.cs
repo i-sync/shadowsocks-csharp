@@ -107,6 +107,8 @@ namespace Shadowsocks.Model
 
         public bool isHideTips;
 
+        public int httpProxyPort;
+
         public Dictionary<string, string> token = new Dictionary<string, string>();
         public Dictionary<string, PortMapConfig> portMap = new Dictionary<string, PortMapConfig>();
 
@@ -381,6 +383,7 @@ namespace Shadowsocks.Model
             sameHostForSameTarget = config.sameHostForSameTarget;
             keepVisitTime = config.keepVisitTime;
             isHideTips = config.isHideTips;
+            httpProxyPort = config.httpProxyPort;
         }
 
         public void FixConfiguration()
