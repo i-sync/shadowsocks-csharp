@@ -51,7 +51,7 @@ namespace Shadowsocks.Controller
             _firstPacket = firstPacket;
             _firstPacketLength = length;
             _connection = socket;
-            socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.NoDelay, true);
+            socket.NoDelay = true;
 
             if (_config.GetPortMapCache().ContainsKey(local_port) && _config.GetPortMapCache()[local_port].type == PortMapType.Forward)
             {
@@ -125,7 +125,7 @@ namespace Shadowsocks.Controller
                     {
                         RspSocks4aHandshakeReceive();
                     }
-                    else if (_firstPacket[0] == 5 && _firstPacketLength >= 2)
+                    else if (_firstPacket[0] == 5 && _firstPacketLength >= 3)
                     {
                         RspSocks5HandshakeReceive();
                     }
@@ -197,15 +197,31 @@ namespace Shadowsocks.Controller
             {
                 response = new byte[] { 0, 91 };
                 Console.WriteLine("socks 4/5 protocol error");
+                _connection.Send(response);
+                Close();
+                return;
             }
             bool no_auth = false;
             bool auth = false;
+            bool has_method = false;
             for (int index = 0; index < _firstPacket[1]; ++index)
             {
                 if (_firstPacket[2 + index] == 0)
+                {
                     no_auth = true;
+                    has_method = true;
+                }
                 else if (_firstPacket[2 + index] == 2)
+                {
                     auth = true;
+                    has_method = true;
+                }
+            }
+            if (!has_method)
+            {
+                Console.WriteLine("Socks5 no acceptable auth method");
+                Close();
+                return;
             }
             if (auth || !no_auth)
             {
@@ -504,8 +520,8 @@ namespace Shadowsocks.Controller
 
         private void Connect()
         {
-            Handler.GetCurrentServer getCurrentServer = delegate (ServerSelectStrategy.FilterFunc filter, string targetURI, bool cfgRandom, bool usingRandom, bool forceRandom) { return _config.GetCurrentServer(filter, targetURI, cfgRandom, usingRandom, forceRandom); };
-            Handler.KeepCurrentServer keepCurrentServer = delegate (string targetURI, string id) { _config.KeepCurrentServer(targetURI, id); };
+            Handler.GetCurrentServer getCurrentServer = delegate (int localPort, ServerSelectStrategy.FilterFunc filter, string targetURI, bool cfgRandom, bool usingRandom, bool forceRandom) { return _config.GetCurrentServer(localPort, filter, targetURI, cfgRandom, usingRandom, forceRandom); };
+            Handler.KeepCurrentServer keepCurrentServer = delegate (int localPort, string targetURI, string id) { _config.KeepCurrentServer(localPort, targetURI, id); };
 
             int local_port = ((IPEndPoint)_connection.LocalEndPoint).Port;
             Handler handler = new Handler();

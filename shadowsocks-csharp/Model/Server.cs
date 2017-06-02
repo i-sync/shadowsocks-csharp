@@ -35,8 +35,8 @@ namespace Shadowsocks.Model
 
     public class Connections
     {
-        private System.Collections.Generic.Dictionary<ProxySocketTunLocal, Int32> sockets = new Dictionary<ProxySocketTunLocal, int>();
-        public bool AddRef(ProxySocketTunLocal socket)
+        private System.Collections.Generic.Dictionary<IHandler, Int32> sockets = new Dictionary<IHandler, int>();
+        public bool AddRef(IHandler socket)
         {
             lock (this)
             {
@@ -51,7 +51,7 @@ namespace Shadowsocks.Model
                 return true;
             }
         }
-        public bool DecRef(ProxySocketTunLocal socket)
+        public bool DecRef(IHandler socket)
         {
             lock (this)
             {
@@ -72,19 +72,17 @@ namespace Shadowsocks.Model
         }
         public void CloseAll()
         {
-            ProxySocketTunLocal[] s;
+            IHandler[] s;
             lock (this)
             {
-                s = new ProxySocketTunLocal[sockets.Count];
+                s = new IHandler[sockets.Count];
                 sockets.Keys.CopyTo(s, 0);
             }
-            foreach (ProxySocketTunLocal socket in s)
+            foreach (IHandler handler in s)
             {
                 try
                 {
-                    //socket.Shutdown(SocketShutdown.Send);
-                    socket.Shutdown(SocketShutdown.Both);
-                    //socket.Close();
+                    handler.Shutdown();
                 }
                 catch
                 {
@@ -125,15 +123,24 @@ namespace Shadowsocks.Model
         private DnsBuffer dnsBuffer = new DnsBuffer();
         private DnsBuffer dnsTargetBuffer = new DnsBuffer();
         private Connections Connections = new Connections();
+        private static Server forwardServer = new Server();
 
         public void CopyServer(Server Server)
         {
-            this.serverSpeedLog = Server.serverSpeedLog;
-            this.dnsBuffer = Server.dnsBuffer;
-            this.dnsTargetBuffer = Server.dnsTargetBuffer;
-            this.Connections = Server.Connections;
-            this.enable = Server.enable;
+            protocoldata = Server.protocoldata;
+            obfsdata = Server.obfsdata;
+            serverSpeedLog = Server.serverSpeedLog;
+            dnsBuffer = Server.dnsBuffer;
+            dnsTargetBuffer = Server.dnsTargetBuffer;
+            Connections = Server.Connections;
+            enable = Server.enable;
         }
+
+        public static Server GetForwardServerRef()
+        {
+            return forwardServer;
+        }
+
         public void SetConnections(Connections Connections)
         {
             this.Connections = Connections;

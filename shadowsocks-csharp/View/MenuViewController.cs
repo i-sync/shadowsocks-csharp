@@ -185,7 +185,7 @@ namespace Shadowsocks.View
             string text = (enabled ?
                     I18N.GetString("System Proxy On: ") + (global ? I18N.GetString("Global") : I18N.GetString("PAC")) :
                     String.Format(I18N.GetString("Running: Port {0}"), config.localPort))  // this feedback is very important because they need to know Shadowsocks is running
-                + "\n" + config.GetCurrentServer(null).FriendlyName();
+                    ;
             _notifyIcon.Text = text.Substring(0, Math.Min(63, text.Length));
         }
 
@@ -203,11 +203,11 @@ namespace Shadowsocks.View
         {
             this.contextMenu1 = new ContextMenu(new MenuItem[] {
                 modeItem = CreateMenuGroup("Mode", new MenuItem[] {
-                    noModifyItem = CreateMenuItem("No modify system proxy", new EventHandler(this.NoModifyItem_Click)),
-                    new MenuItem("-"),
                     enableItem = CreateMenuItem("Disable system proxy", new EventHandler(this.EnableItem_Click)),
                     PACModeItem = CreateMenuItem("PAC", new EventHandler(this.PACModeItem_Click)),
-                    globalModeItem = CreateMenuItem("Global", new EventHandler(this.GlobalModeItem_Click))
+                    globalModeItem = CreateMenuItem("Global", new EventHandler(this.GlobalModeItem_Click)),
+                    new MenuItem("-"),
+                    noModifyItem = CreateMenuItem("No modify system proxy", new EventHandler(this.NoModifyItem_Click))
                 }),
                 CreateMenuGroup("PAC ", new MenuItem[] {
                     CreateMenuItem("Update local PAC from Lan IP list", new EventHandler(this.UpdatePACFromLanIPListItem_Click)),

@@ -42,6 +42,19 @@ namespace Shadowsocks.Util
             // which is part of user experience
             GC.Collect(GC.MaxGeneration);
             GC.WaitForPendingFinalizers();
+
+            if (UIntPtr.Size == 4)
+            {
+                SetProcessWorkingSetSize(Process.GetCurrentProcess().Handle,
+                                         (UIntPtr)0xFFFFFFFF,
+                                         (UIntPtr)0xFFFFFFFF);
+            }
+            else if (UIntPtr.Size == 8)
+            {
+                SetProcessWorkingSetSize(Process.GetCurrentProcess().Handle,
+                                         (UIntPtr)0xFFFFFFFFFFFFFFFF,
+                                         (UIntPtr)0xFFFFFFFFFFFFFFFF);
+            }
 #endif
         }
 
@@ -69,6 +82,16 @@ namespace Shadowsocks.Util
             RNGCryptoServiceProvider rngServiceProvider = new RNGCryptoServiceProvider();
             rngServiceProvider.GetBytes(temp);
             temp.CopyTo(buf, 0);
+        }
+
+        public static bool BitCompare(byte[] target, int target_offset, byte[] m, int m_offset, int targetLength)
+        {
+            for (int i = 0; i < targetLength; ++i)
+            {
+                if (target[target_offset + i] != m[m_offset + i])
+                    return false;
+            }
+            return true;
         }
 
         public static int FindStr(byte[] target, int targetLength, byte[] m)
@@ -436,6 +459,11 @@ namespace Shadowsocks.Util
 
         [DllImport("gdi32.dll")]
         static extern int GetDeviceCaps(IntPtr hdc, int nIndex);
+
+        [DllImport("kernel32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool SetProcessWorkingSetSize(IntPtr process,
+            UIntPtr minimumWorkingSetSize, UIntPtr maximumWorkingSetSize);
 #endif
     }
 }

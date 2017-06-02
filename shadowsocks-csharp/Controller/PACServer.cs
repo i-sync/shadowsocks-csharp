@@ -72,7 +72,7 @@ namespace Shadowsocks.Controller
                     }
                     else if (kv.Length == 1)
                     {
-                        if (line.IndexOf("auth=" + _config.localAuthPassword) > 0)
+                        if (!Util.Utils.isLocal(socket) || line.IndexOf("auth=" + _config.localAuthPassword) > 0)
                         {
                             if (line.IndexOf(" /pac?") > 0 && line.IndexOf("GET") == 0)
                             {
@@ -202,7 +202,6 @@ Connection: Close
 ", System.Text.Encoding.UTF8.GetBytes(pac).Length) + pac;
                 byte[] response = System.Text.Encoding.UTF8.GetBytes(text);
                 socket.BeginSend(response, 0, response.Length, 0, new AsyncCallback(SendCallback), socket);
-                Util.Utils.ReleaseMemory();
             }
             catch (Exception e)
             {
