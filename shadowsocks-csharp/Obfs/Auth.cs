@@ -183,10 +183,6 @@ namespace Shadowsocks.Obfs
             }
             return outdata;
         }
-
-        public override void Dispose()
-        {
-        }
     }
 
     public class AuthSHA1V2 : VerifySimpleBase
@@ -409,10 +405,6 @@ namespace Shadowsocks.Obfs
                 }
             }
             return outdata;
-        }
-
-        public override void Dispose()
-        {
         }
     }
 
@@ -655,10 +647,6 @@ namespace Shadowsocks.Obfs
                 }
             }
             return outdata;
-        }
-
-        public override void Dispose()
-        {
         }
     }
 
@@ -974,13 +962,13 @@ namespace Shadowsocks.Obfs
 
                 byte[] encrypt_key = user_key;
 
-                Encryption.IEncryptor encryptor = Encryption.EncryptorFactory.GetEncryptor("aes-128-cbc", System.Convert.ToBase64String(encrypt_key) + SALT);
+                Encryption.IEncryptor encryptor = Encryption.EncryptorFactory.GetEncryptor("aes-128-cbc", System.Convert.ToBase64String(encrypt_key) + SALT, false);
                 int enc_outlen;
 
                 encryptor.SetIV(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
                 encryptor.Encrypt(encrypt, 16, encrypt_data, out enc_outlen);
                 encryptor.Dispose();
-                Array.Copy(encrypt_data, 16, encrypt, 4, 16);
+                Array.Copy(encrypt_data, 0, encrypt, 4, 16);
                 uid.CopyTo(encrypt, 0);
             }
             {
@@ -1255,17 +1243,20 @@ namespace Shadowsocks.Obfs
             return plaindata;
         }
 
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
 #if PROTOCOL_STATISTICS
-            if (Server != null && Server.data != null && packet_cnt != null)
+            if (disposing)
             {
-                AuthDataAes128 authData = Server.data as AuthDataAes128;
-                if (authData != null && authData.tree != null)
+                if (Server != null && Server.data != null && packet_cnt != null)
                 {
-                    lock (authData)
+                    AuthDataAes128 authData = Server.data as AuthDataAes128;
+                    if (authData != null && authData.tree != null)
                     {
-                        authData.tree.Update(packet_cnt);
+                        lock (authData)
+                        {
+                            authData.tree.Update(packet_cnt);
+                        }
                     }
                 }
             }
