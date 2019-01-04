@@ -19,10 +19,12 @@ namespace Shadowsocks.Model
         public IPAddress ip;
         public DateTime updateTime;
         public string host;
-        public bool isExpired(string host)
+        public bool force_expired;
+         public bool isExpired(string host)
         {
             if (updateTime == null) return true;
             if (this.host != host) return true;
+            if (force_expired && (DateTime.Now - updateTime).TotalMinutes > 1) return true;
             return (DateTime.Now - updateTime).TotalMinutes > 30;
         }
         public void UpdateDns(string host, IPAddress ip)
@@ -30,6 +32,7 @@ namespace Shadowsocks.Model
             updateTime = DateTime.Now;
             this.ip = new IPAddress(ip.GetAddressBytes());
             this.host = host;
+            force_expired = false;
         }
     }
 
@@ -121,7 +124,6 @@ namespace Shadowsocks.Model
         private object obfsdata;
         private ServerSpeedLog serverSpeedLog = new ServerSpeedLog();
         private DnsBuffer dnsBuffer = new DnsBuffer();
-        private DnsBuffer dnsTargetBuffer = new DnsBuffer();
         private Connections Connections = new Connections();
         private static Server forwardServer = new Server();
 
@@ -131,7 +133,6 @@ namespace Shadowsocks.Model
             obfsdata = Server.obfsdata;
             serverSpeedLog = Server.serverSpeedLog;
             dnsBuffer = Server.dnsBuffer;
-            dnsTargetBuffer = Server.dnsTargetBuffer;
             Connections = Server.Connections;
             enable = Server.enable;
         }
@@ -160,11 +161,6 @@ namespace Shadowsocks.Model
         public DnsBuffer DnsBuffer()
         {
             return dnsBuffer;
-        }
-
-        public DnsBuffer DnsTargetBuffer()
-        {
-            return dnsTargetBuffer;
         }
 
         public ServerSpeedLog ServerSpeedLog()
